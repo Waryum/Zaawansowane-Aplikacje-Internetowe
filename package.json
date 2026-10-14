@@ -1,0 +1,28 @@
+{
+  "name": "aplikacja-pogodowa",
+  "version": "1.0.0",
+  "description": "weather projecting website",
+  "keywords": [
+    "API",
+    "weather-app",
+    "student"
+  ],
+  "homepage": "https://github.com/Waryum/Zaawansowane-Aplikacje-Internetowe#readme",
+  "bugs": {
+    "url": "https://github.com/Waryum/Zaawansowane-Aplikacje-Internetowe/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Waryum/Zaawansowane-Aplikacje-Internetowe.git"
+  },
+  "license": "ISC",
+  "author": "Jakub Woroszył",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
