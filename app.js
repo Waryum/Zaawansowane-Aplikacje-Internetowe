@@ -11,19 +11,20 @@ app.use(express.urlencoded({extended: false}));
 // built-in middleware for json:
 app.use(express.json());
 
-//built-in middleware for static files:
+// built-in middleware for static files:
 app.use(express.static(path.join(__dirname, '/public')));
+
+// middleware setting header to application/json
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+})
 
 
 // https method
-app.get(/^\/(?:index(?:\.html)?)?$/, (req, res) => {
+app.get('/api/health', (req, res) => {
     //res.send('Hello World!');
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
-});
-
-app.get('/new-page.html', (req, res) => {
-    res.send('Hello World!');
-    // res.sendFile(path.join(__dirname, 'views', 'new-page.html'));
+    res.status(200).json({string: 'ok'});
 });
 
 //uruchomienie nasluchu serwera
