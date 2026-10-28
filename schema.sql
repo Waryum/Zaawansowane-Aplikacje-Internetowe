@@ -35,12 +35,13 @@ CREATE TABLE IF NOT EXISTS sensors (
 # Creating a table for measurements
 
 CREATE TABLE IF NOT EXISTS measurements (
-                                            id INT NOT NULL AUTO_INCREMENT,
-                                            seriesId INT NOT NULL,
-                                            sensorID INT NULL,
-                                            value DOUBLE NOT NULL,
-                                            timeStamp NOT NULL DEFAULT DATETIME(3),
+    id INT NOT NULL AUTO_INCREMENT,
+    seriesId INT NOT NULL,
+    sensorId INT NOT NULL,
+    value DOUBLE NOT NULL,
+    timestamp DATETIME(3) NOT NULL,
     PRIMARY KEY (id),
+    INDEX idxMeasurementsSeriesTime (seriesId, timestamp),
     CONSTRAINT fkMeasurementsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
     CONSTRAINT fkMeasurementsSensors FOREIGN KEY (sensorId) REFERENCES sensors (id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
