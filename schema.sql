@@ -32,6 +32,19 @@ CREATE TABLE IF NOT EXISTS sensors (
     CONSTRAINT checkSensorNameLength CHECK (CHAR_LENGTH(name) > 0)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+# Creating a table for measurements
+
+CREATE TABLE IF NOT EXISTS measurements (
+                                            id INT NOT NULL AUTO_INCREMENT,
+                                            seriesId INT NOT NULL,
+                                            sensorID INT NULL,
+                                            value DOUBLE NOT NULL,
+                                            timeStamp NOT NULL DEFAULT DATETIME(3),
+    PRIMARY KEY (id),
+    CONSTRAINT fkMeasurementsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
+    CONSTRAINT fkMeasurementsSensors FOREIGN KEY (sensorId) REFERENCES sensors (id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 #For Testing purposes
 #DROP TABLE IF EXISTS series;
