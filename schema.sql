@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS sensors (
 CREATE TABLE IF NOT EXISTS measurements (
     id INT NOT NULL AUTO_INCREMENT,
     seriesId INT NOT NULL,
-    sensorId INT NOT NULL,
+    sensorId INT NULL,
     value DOUBLE NOT NULL,
     timestamp DATETIME(3) NOT NULL,
     PRIMARY KEY (id),
