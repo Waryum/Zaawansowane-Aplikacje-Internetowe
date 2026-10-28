@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS sensors (
     lastMeasurementAt DATETIME NULL,
     apiKeyHash CHAR(64) NOT NULL UNIQUE,
     PRIMARY KEY (id),
-    CONSTRAINT sensorsIdConnection FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
+    CONSTRAINT fkSensorsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
     CONSTRAINT checkSensorNameLength CHECK (CHAR_LENGTH(name) > 0)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
