@@ -1,12 +1,6 @@
-# creating a Database named db_test
-
-# CREATE DATABASE IF NOT EXISTS db_test CHARACTER SET 'utf8mb4';
-
-# Creating a table for series
-
 CREATE TABLE IF NOT EXISTS series (
-                                      id INT NOT NULL AUTO_INCREMENT,
-                                      name VARCHAR(100) NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
     lowestValue DOUBLE NOT NULL,
     highestValue DOUBLE NOT NULL,
     unit VARCHAR(20) NULL,
@@ -15,14 +9,12 @@ CREATE TABLE IF NOT EXISTS series (
     PRIMARY KEY (id),
     CONSTRAINT checkSeriesRange CHECK (lowestValue < highestValue),
     CONSTRAINT checkSeriesNameLength CHECK (CHAR_LENGTH(name) > 0)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
-# Creating a table for sensors
 
 CREATE TABLE IF NOT EXISTS sensors (
-                                       id INT NOT NULL AUTO_INCREMENT,
-                                       name VARCHAR(100) NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
     seriesId INT NOT NULL,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     lastMeasurementAt DATETIME NULL,
@@ -31,80 +23,39 @@ CREATE TABLE IF NOT EXISTS sensors (
     CONSTRAINT fkSensorsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
     CONSTRAINT checkSensorNameLength CHECK (CHAR_LENGTH(name) > 0),
     CONSTRAINT checkSensorKeyHashLength CHECK (CHAR_LENGTH(apiKeyHash) = 64)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
-# Creating a table for measurements
 
 CREATE TABLE IF NOT EXISTS measurements (
-                                            id INT NOT NULL AUTO_INCREMENT,
-                                            seriesId INT NOT NULL,
-                                            sensorId INT NULL,
-                                            value DOUBLE NOT NULL,
-                                            timestamp DATETIME(3) NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT,
+    seriesId INT NOT NULL,
+    sensorId INT NULL,
+    value DOUBLE NOT NULL,
+    timestamp DATETIME(3) NOT NULL,
     PRIMARY KEY (id),
     INDEX idxMeasurementsSeriesTime (seriesId, timestamp),
     CONSTRAINT fkMeasurementsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
     CONSTRAINT fkMeasurementsSensors FOREIGN KEY (sensorId) REFERENCES sensors (id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-# Creating a table for administrator
 
 CREATE TABLE IF NOT EXISTS admins (
-                                      id INT NOT NULL AUTO_INCREMENT,
-                                      username VARCHAR(255) NOT NULL UNIQUE DEFAULT 'admin',
+    id INT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
     passwordHash VARCHAR(255) NOT NULL,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    PRIMARY KEY (id),
+    CONSTRAINT checkUsernameLength CHECK (CHAR_LENGTH(username) > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
-# Creating a table for tokens
 
 CREATE TABLE IF NOT EXISTS tokens (
-                                      id INT NOT NULL AUTO_INCREMENT,
-                                      adminId INT NOT NULL,
-                                      tokenHash CHAR(255) NOT NULL UNIQUE,
+    id INT NOT NULL AUTO_INCREMENT,
+    adminId INT NOT NULL,
+    tokenHash CHAR(64) NOT NULL UNIQUE,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expiresAt DATETIME NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fkTokensAdmins FOREIGN KEY (adminId) REFERENCES admins (id) ON DELETE CASCADE,
     CONSTRAINT checkTokenHashLength CHECK (CHAR_LENGTH(tokenHash) = 64)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
-
-
-
-----------------------------------------
-# database structre testing
-
-SELECT @@sql_mode; # has to have STRICT_TRANS_TABLES
-
-# for every table
-SHOW CREATE TABLE series;
-
-# Test for series -- gites
-
-INSERT INTO SERIES (name, lowestValue, highestValue, unit, color, icon) VALUES ('Warszawa - Temperatura', -40, 50, 'st. C', '#1F33BA', 'star');
-
-# Tests for sensors
-INSERT INTO SENSORS (name, seriesId, apiKeyHash) VALUES ('Czujnik test', 3, '90e67623419d3b6e1e8e4fe46e370473ec446cb9badba1284878b42a7f0eb25f');
-
-# Tests for measurements
-
-INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (3, 9, 28, UTC_TIMESTAMP(3));
-
-INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (2, 1, 34, UTC_TIMESTAMP(3));
-
-# Tests for removing sensors
-
-DELETE FROM sensors WHERE id=1;
-
-# Tests for removing series
-
-DELETE FROM series WHERE id=2;
-
-#For Testing purposes
-DROP TABLE IF EXISTS series;
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
