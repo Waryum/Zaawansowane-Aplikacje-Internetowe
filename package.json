@@ -20,7 +20,8 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "create-admin": "node /scripts/create-admin.js"
   },
   "dependencies": {
     "dotenv": "^18.0.9",
