@@ -29,17 +29,19 @@ CREATE TABLE IF NOT EXISTS sensors (
     apiKeyHash CHAR(64) NOT NULL UNIQUE,
     PRIMARY KEY (id),
     CONSTRAINT fkSensorsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
-    CONSTRAINT checkSensorNameLength CHECK (CHAR_LENGTH(name) > 0)
+    CONSTRAINT checkSensorNameLength CHECK (CHAR_LENGTH(name) > 0),
+    CONSTRAINT checkSensorKeyHashLength CHECK (CHAR_LENGTH(apiKeyHash) = 64)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 # Creating a table for measurements
 
 CREATE TABLE IF NOT EXISTS measurements (
-    id INT NOT NULL AUTO_INCREMENT,
-    seriesId INT NOT NULL,
-    sensorId INT NULL,
-    value DOUBLE NOT NULL,
-    timestamp DATETIME(3) NOT NULL,
+                                            id INT NOT NULL AUTO_INCREMENT,
+                                            seriesId INT NOT NULL,
+                                            sensorId INT NULL,
+                                            value DOUBLE NOT NULL,
+                                            timestamp DATETIME(3) NOT NULL,
     PRIMARY KEY (id),
     INDEX idxMeasurementsSeriesTime (seriesId, timestamp),
     CONSTRAINT fkMeasurementsSeries FOREIGN KEY (seriesId) REFERENCES series (id) ON DELETE CASCADE,
@@ -47,6 +49,35 @@ CREATE TABLE IF NOT EXISTS measurements (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+
+# database structre testing
+
+SELECT @@sql_mode; # has to have STRICT_TRANS_TABLES
+
+# for every table
+SHOW CREATE TABLE series;
+
+# Test for series -- gites
+
+INSERT INTO SERIES (name, lowestValue, highestValue, unit, color, icon) VALUES ('Warszawa - Temperatura', -40, 50, 'st. C', '#1F33BA', 'star');
+
+# Tests for sensors
+INSERT INTO SENSORS (name, seriesId, apiKeyHash) VALUES ('Czujnik test', 3, '90e67623419d3b6e1e8e4fe46e370473ec446cb9badba1284878b42a7f0eb25f');
+
+# Tests for measurements
+
+INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (3, 9, 28, NOW());
+
+INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (2, 1, 34, NOW());
+
+# Tests for removing sensors
+
+DELETE FROM sensors WHERE id=1;
+
+# Tests for removing series
+
+DELETE FROM series WHERE id=2;
+
 #For Testing purposes
-#DROP TABLE IF EXISTS series;
+DROP TABLE IF EXISTS sensors;
 
