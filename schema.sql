@@ -48,6 +48,30 @@ CREATE TABLE IF NOT EXISTS measurements (
     CONSTRAINT fkMeasurementsSensors FOREIGN KEY (sensorId) REFERENCES sensors (id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+# Creating a table for administrator
+
+CREATE TABLE IF NOT EXISTS admins (
+                                      id INT NOT NULL AUTO_INCREMENT,
+                                      username VARCHAR(255) NOT NULL UNIQUE DEFAULT 'admin',
+    passwordHash VARCHAR(255) NOT NULL,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+# Creating a table for tokens
+
+CREATE TABLE IF NOT EXISTS tokens (
+                                      id INT NOT NULL AUTO_INCREMENT,
+                                      adminId INT NOT NULL,
+                                      tokenHash CHAR(255) NOT NULL UNIQUE,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expiresAt DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fkTokensAdmins FOREIGN KEY (adminId) REFERENCES admins (id) ON DELETE CASCADE,
+    CONSTRAINT checkTokenHashLength CHECK (CHAR_LENGTH(tokenHash) = 64)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 
 
