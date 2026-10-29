@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS measurements (
 
 
 
+
+
+----------------------------------------
 # database structre testing
 
 SELECT @@sql_mode; # has to have STRICT_TRANS_TABLES
@@ -66,9 +69,9 @@ INSERT INTO SENSORS (name, seriesId, apiKeyHash) VALUES ('Czujnik test', 3, '90e
 
 # Tests for measurements
 
-INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (3, 9, 28, NOW());
+INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (3, 9, 28, UTC_TIMESTAMP(3));
 
-INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (2, 1, 34, NOW());
+INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (2, 1, 34, UTC_TIMESTAMP(3));
 
 # Tests for removing sensors
 
@@ -79,5 +82,5 @@ DELETE FROM sensors WHERE id=1;
 DELETE FROM series WHERE id=2;
 
 #For Testing purposes
-DROP TABLE IF EXISTS sensors;
+DROP TABLE IF EXISTS series;
 
