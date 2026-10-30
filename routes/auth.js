@@ -13,13 +13,27 @@ const TOKEN_TTL_SECONDS = 3600; // Token time to live
 //
 router.post('/login', async (req, res) => {
     // read username and password from req.body
+    const body = req.body ?? {}; // prepared for req with no body, if no body substitute with {}.
+    const username = body.username;
+    const password = body.password;
 
     // if missing throw HttpError(400, ...)
+    if (typeof username !== 'string' || username.length === 0) {
+        throw new HttpError(400, 'Field "username" is required');
+    }
+    if (typeof password !== 'string' || password.length === 0) {
+        throw new HttpError(400, 'Field "password" is required');
+    }
 
     // pool.query --> SELECT id, passwordHash FROM admins WHERE username = ?
-    // verifyPassword
+    const savedPasswordHashDb = await pool.query('SELECT id, passwordHash FROM admins WHERE username = ?', [username]);
 
+    // verifyPassword
+    const checkPasswordBool = await verifyPassword(savedPasswordHashDb, password);
     // errors if no row or verifyPassword failed
+    if (!checkPasswordBool) {
+        throw new HttpError(401, "Invalid password");
+    }
 
     // generate token, save to db tokens: adminId, hashTokens(token),
     // expiresAt = UTC_TIMESTAMP() + INTERVAL ?, SECOND TOKEN_TTL_SECONDS

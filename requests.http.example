@@ -1,0 +1,6 @@
+// testing requests
+
+POST http://localhost:3500/api/auth/login
+Content-Type: application/json
+
+{"username":  "login_z_env", "password":  "haslo_z_env"}
