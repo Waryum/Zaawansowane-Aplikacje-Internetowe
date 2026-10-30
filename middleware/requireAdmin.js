@@ -3,7 +3,7 @@
 // specific error changing via HttpError
 const HttpError = require("../utils/errors");
 // token functions
-const hashToken = require("../utils/tokens");
+const { hashToken } = require("../utils/tokens");
 const pool = require("../db/connection");
 
 async function requireAdmin(req, res, next){
