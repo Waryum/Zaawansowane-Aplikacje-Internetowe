@@ -8,26 +8,24 @@ const system = require('./routes/system');
 
 // notFound function
 const notFound = require('./middleware/notFound');
+// errorHandler function
+const errorHandler = require('./middleware/errorHandler');
 
 // app creation
 const app = express();
-
-// will require adding app.use for other routes
 
 // application is told to use /api/system.js (will route it as GET /api/health)
 app.use('/api', system);
 
 
-
+// application is told to use express.json for error handling
+app.use(express.json());
 
 // end of routes, if no catch show error 404 not found
 app.use(notFound);
 
-// application is told to use express.json for error handling
-app.use(express.json());
-
-
-//
+// if any other type of undefined error, rely on errorHandler
+app.use(errorHandler);
 
 
 // export app -- specifically for server.js to "use"
