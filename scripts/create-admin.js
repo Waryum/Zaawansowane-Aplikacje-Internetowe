@@ -9,8 +9,10 @@ const pool = require('../db/connection');
 // require password.js file with password functions
 const passwordUtils = require('../utils/password');
 
+// env parameters - username and password
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 
 async function main(){
     // password validation, does it have a correct value, is of a correct length?
@@ -33,6 +35,7 @@ async function main(){
     await pool.query('INSERT INTO admins (username, passwordHash) VALUES (?, ?)', [ADMIN_USERNAME, passwordHash]);
     console.log(`Successfully created account: ${ADMIN_USERNAME}`);
 }
+
 
 // main function asynch. usage with pool ending in case of error.
 main().catch((err) =>{
