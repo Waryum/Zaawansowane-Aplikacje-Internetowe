@@ -9,15 +9,27 @@ const pool = require('../db/connection');
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-// checking length of ADMIN_USERNAME
-if (ADMIN_USERNAME.length < 1 || ADMIN_USERNAME.length > 8){
-    console.log('Admin Username should be at least 8 characters long');
-    pool.end();
+async function main(){
+    // password validation, does it have a correct value, is of a correct length?
+    if ((!ADMIN_PASSWORD) || (ADMIN_PASSWORD.length < 8)) {
+        throw new Error('Please specify a valid ADMIN_PASSWORD');
+    }
+    // username validation, is it given in the .env file
+    if ((!ADMIN_USERNAME) || (ADMIN_USERNAME.length > 50)) {
+        throw new Error('Please specify a valid ADMIN_USERNAME');
+    }
+    // does the account already exist? if yes message and return
+    const usernameCheck = await pool.query('SELECT id FROM admins WHERE username = ?', [ADMIN_USERNAME]);
+    if (usernameCheck.length > 0){
+        console.log(`Specified account: ${ADMIN_USERNAME} already exists`);
+        return;
+    }
+    // hashing the password
+    // INSERT into database
 }
 
-// is supposed to check if the new username is in the database
-async function checkAdminUsername(){
-    await pool.query('SELECT EXISTS (SELECT *  FROM admins WHERE username = ?)', ADMIN_USERNAME);
-
-
-}
+// main function asynchronised usage with pool ending in case of error.
+main().catch((err) =>{
+    console.error('Admin creation failed:', err.message);
+    process.exitCode = 1; // doesn't end process sets exit code allowing for pool.end()
+}).finally(() => pool.end());
