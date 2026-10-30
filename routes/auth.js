@@ -45,12 +45,12 @@ router.post('/login', async (req, res) => {
     // expiresAt = UTC_TIMESTAMP() + INTERVAL ?, SECOND TOKEN_TTL_SECONDS
 
     const token = generateToken();
-    await pool.query('INSERT INTO tokens (adminId, tokenHash, expiresAt) VALUES (admin.id, hashToken(token), UTC_TIMESTAMP() + INTERVAL ? SECONDS)', TOKEN_TTL_SECONDS);
+    await pool.query('INSERT INTO tokens (adminId, tokenHash, expiresAt) VALUES (?, ?, UTC_TIMESTAMP() + INTERVAL ? SECOND)', [admin.id, hashToken(token), TOKEN_TTL_SECONDS]);
 
     // res.status(200).json({accessToken, tokenType, expiresIn})
     res.status(200).json({
         accessToken: token,
-        tokenType: token,
+        tokenType: 'Bearer',
         expiresIn: TOKEN_TTL_SECONDS
     });
 });
