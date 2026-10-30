@@ -5,12 +5,13 @@ const pool = require("../db/connection");
 const HttpError = require("../utils/errors");
 const { verifyPassword } = require("../utils/password");
 const { generateToken, hashToken } = require("../utils/tokens");
+const requireAdmin = require("../middleware/requireAdmin"); // middleware for checking Admin token
 
 // module for route creation
 const router = express.Router();
 const TOKEN_TTL_SECONDS = 3600; // Token time to live
 
-//
+// login post
 router.post('/login', async (req, res) => {
     // read username and password from req.body
     const body = req.body ?? {}; // prepared for req with no body, if no body substitute with {}.
@@ -53,6 +54,13 @@ router.post('/login', async (req, res) => {
         tokenType: 'Bearer',
         expiresIn: TOKEN_TTL_SECONDS
     });
+});
+
+
+// logout post
+router.post('/logout', requireAdmin, async (req, res) => {
+    await pool.query('DELETE FROM tokens WHERE tokenHash = ?', [req.tokenHash]);
+    res.status(204).end();
 });
 
 module.exports = router;
