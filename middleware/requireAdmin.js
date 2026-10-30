@@ -3,7 +3,7 @@
 // specific error changing via HttpError
 const HttpError = require("../utils/errors");
 // token functions
-const { generateToken, hashToken } = require("../utils/tokens");
+const hashToken = require("../utils/tokens");
 const pool = require("../db/connection");
 
 async function requireAdmin(req, res, next){
@@ -28,14 +28,10 @@ async function requireAdmin(req, res, next){
         throw new HttpError(401, 'Not a valid token');
     }
 
-
-    // token correct admin found
-
-
-
-
-
-
+    // token correct admin found, forwards the request further with the correct adminId, and token
+    req.adminId = admin.adminId; // logged user
+    req.tokenHash = tokenHash; // token used for logging in
+    next(); // let it pass further
 
 }
 
