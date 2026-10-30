@@ -6,6 +6,9 @@ require('dotenv').config();
 // require pool connection from mariaDB
 const pool = require('../db/connection');
 
+// require password.js file with password functions
+const passwordUtils = require('../utils/password');
+
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -25,10 +28,13 @@ async function main(){
         return;
     }
     // hashing the password
+    const passwordHash = await passwordUtils.hashPassword(ADMIN_PASSWORD);
     // INSERT into database
+    await pool.query('INSERT INTO admins (username, passwordHash) VALUES (?, ?)', [ADMIN_USERNAME, passwordHash]);
+    console.log(`Successfully created account: ${ADMIN_USERNAME}`);
 }
 
-// main function asynchronised usage with pool ending in case of error.
+// main function asynch. usage with pool ending in case of error.
 main().catch((err) =>{
     console.error('Admin creation failed:', err.message);
     process.exitCode = 1; // doesn't end process sets exit code allowing for pool.end()
