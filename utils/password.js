@@ -3,14 +3,12 @@ const argon2 = require("argon2");
 
 // hashing function based on argon2
 async function hashPassword(password) {
-    const hash = await argon2.hash(password);
-    return hash;
+    return await argon2.hash(password);
 }
 
 // password verification function based on argon2
 async function verifyPassword(hash, password){
-    const isValid = await argon2.verify(hash, password);
-    return isValid;
+     return await argon2.verify(hash, password);
 }
 
 // export both functions
