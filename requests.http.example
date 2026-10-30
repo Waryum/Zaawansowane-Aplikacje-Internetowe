@@ -1,6 +1,14 @@
 // testing requests
+### Logging
 
 POST http://localhost:3500/api/auth/login
 Content-Type: application/json
 
-{"username":  "login_z_env", "password":  "haslo_z_env"}
+{"username":  "YourUsername", "password":  "YourPassword"}
+
+> {% client.global.set("token", response.body.accessToken); %}
+
+### Logging out
+
+POST http://localhost:3500/api/auth/logout
+Authorization: Bearer {{token}}
