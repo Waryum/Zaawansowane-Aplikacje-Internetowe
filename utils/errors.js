@@ -2,7 +2,7 @@
 
 // inspiration: https://itztalhaa.medium.com/custom-error-class-and-centralized-error-handling-in-nodejs-03887eb65793
 
-//
+
 const { STATUS_CODES } = require('node:http');
 
 // general class for dealing with error codes
