@@ -9,6 +9,9 @@ const system = require('./routes/system');
 // authorization route
 const authRouter = require('./routes/auth');
 
+//series route
+const series = require('./routes/series');
+
 // notFound function
 const notFound = require('./middleware/notFound');
 // errorHandler function
@@ -24,7 +27,8 @@ app.use(express.json());
 app.use('/api', system);
 // application is told to use /api/auth, authorization method
 app.use('/api/auth', authRouter);
-
+// application is told to use /api/series
+app.use('/api/series', series);
 
 
 
