@@ -4,7 +4,6 @@
 // required functions
 const express = require('express');
 const pool = require("../db/connection");
-const HttpError = require("../utils/errors");
 
 // module for route creation
 const router = express.Router();
