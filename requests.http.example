@@ -12,3 +12,6 @@ Content-Type: application/json
 
 POST http://localhost:3500/api/auth/logout
 Authorization: Bearer {{token}}
+
+### Listing series
+GET http://localhost:3500/api/series
