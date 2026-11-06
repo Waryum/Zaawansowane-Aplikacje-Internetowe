@@ -65,6 +65,42 @@ router.post("/", requireSensor, async (req, res) => {
         .json(toMeasurementsResponse(savedMeasurement[0]));
 })
 
+// GET /api/measurements/{id}
+router.get('/:{measurementId}', async (req, res) => {
+    // check database for specific measurementId received in Request
+    const rows = await pool.query('SELECT id, seriesId, sensorId, value, timestamp FROM measurements WHERE id = ?', [req.params.measurementId]);
+    const row = rows[0];
+    if (row === undefined){
+        throw new HttpError(404, `Specified measurement with id ${req.params.measurementId} not found.`);
+    }
+    // response if specified seriesId found
+    res.json(toMeasurementsResponse(row));
+})
+
+// GET /api/measurements with filters
+router.get('/', async (req, res) => {
+    // tables for search parameters and conditions
+    const conditions = [];
+    const params = [];
+    // check if seriesId is defined
+    if (seriesIds !== undefined){
+        conditions.push(`seriesId IN (${seriesIds.map(() => '?').join(', ')})`);
+        params.push(...seriesIds);
+    }
+    if (from !== undefined){
+        conditions.push('timestamp >= ?');
+        params.push(from);
+    }
+    if (to !== undefined){
+        conditions.push('timestamp <= ?');
+        params.push(to);
+    }
+
+    const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+    const sql = `SELECT id, seriesId, sensorId, value, timestamp FROM measurements ${where} ` + `ORDER BY timestamp ${direction}, id ${direction} LIMIT ?`;
+    params.push(limit);
+})
+
 
 
 module.exports = router;
