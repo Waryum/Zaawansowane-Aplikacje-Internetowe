@@ -22,6 +22,17 @@ function toMeasurementsResponse(row){
     };
 }
 
+// function for parsing Date parameters
+function parseDateParam(value, name){
+    if (value === undefined){
+        return undefined;
+    }
+    if (typeof value !== 'string' || Number.isNaN(new Date(value).getTime())){
+        throw new HttpError(`Invalid date parameter: ${value} with name: ${name}`);
+    }
+    return value;
+}
+
 // POST /api/measurements, requires sensor api key
 router.post("/", requireSensor, async (req, res) => {
     // get request body
@@ -66,7 +77,7 @@ router.post("/", requireSensor, async (req, res) => {
 })
 
 // GET /api/measurements/{id}
-router.get('/:{measurementId}', async (req, res) => {
+router.get('/:measurementId', async (req, res) => {
     // check database for specific measurementId received in Request
     const rows = await pool.query('SELECT id, seriesId, sensorId, value, timestamp FROM measurements WHERE id = ?', [req.params.measurementId]);
     const row = rows[0];
@@ -79,6 +90,37 @@ router.get('/:{measurementId}', async (req, res) => {
 
 // GET /api/measurements with filters
 router.get('/', async (req, res) => {
+
+    let seriesIds;
+    // check if seriesIds are properly given in request
+    if (req.query.series !== undefined){
+        if (typeof req.query.series !== 'string'){
+            throw new HttpError(400, 'Parameter "series" must be a comma-separated list of ids');
+        }
+    }
+    // check if seriesIds received has any Ids given
+    seriesIds = req.query.series.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+    if (seriesIds.length === 0){
+        throw new HttpError(400, 'Parameter "series" must contain at least one id');
+    }
+
+    // parse date in search filters
+    const from = parseDateParam(req.query.from, 'from');
+    const to = parseDateParam(req.query.to, 'to');
+
+    // sort turned into direction
+    const sort = req.query.sort ?? 'timestamp';
+    if (sort !== 'timestamp' && sort !== '-timestamp'){
+        throw new HttpError(400, 'Parameter "sort" must be "timestamp" or "-timestamp"');
+    }
+    const direction = sort === '-timestamp' ? 'DESC' : 'ASC';
+
+    // limit
+    const limit = req.query.limit ?? 1000;
+    if (Number.isInteger(limit) || limit < 1 || limit > 10000){
+        throw new HttpError(400, 'Parameter "limit" must a number from the range [1, 10000]');
+    }
+
     // tables for search parameters and conditions
     const conditions = [];
     const params = [];
@@ -99,6 +141,9 @@ router.get('/', async (req, res) => {
     const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
     const sql = `SELECT id, seriesId, sensorId, value, timestamp FROM measurements ${where} ` + `ORDER BY timestamp ${direction}, id ${direction} LIMIT ?`;
     params.push(limit);
+
+    const rows = await pool.query(sql, params);
+    res.json(rows.map(toMeasurementsResponse));
 })
 
 
