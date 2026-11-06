@@ -2,3 +2,4 @@
 /.idea/
 /.env
 /requests.http
+/full_test.http
