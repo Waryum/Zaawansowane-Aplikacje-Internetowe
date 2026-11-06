@@ -60,7 +60,7 @@ router.post("/", async (req, res) => {
 // GET /api/sensors, requiresAdmin
 router.get('/', async (req, res) => {
     // check database for a list of sensors
-    const rows = await pool.query('SELECT id, name, createdAt, lastMeasurementAt FROM sensors ORDER BY id');
+    const rows = await pool.query('SELECT id, name, seriesId, createdAt, lastMeasurementAt FROM sensors ORDER BY id');
     //response in json
     res.json(rows.map(toSensorsResponse));
 })
@@ -68,7 +68,7 @@ router.get('/', async (req, res) => {
 // GET /api/sensor/{sensorId}
 router.get('/:sensorId', async (req, res) => {
     // check database for specific sensorId received in Request
-    const rows = await pool.query('SELECT id, name, createdAt, lastMeasurementAt FROM sensors WHERE id = ?', [req.params.sensorId]);
+    const rows = await pool.query('SELECT id, name, seriesId, createdAt, lastMeasurementAt FROM sensors WHERE id = ?', [req.params.sensorId]);
     const row = rows[0];
     if (row === undefined){
         throw new HttpError(404, `Specified sensor with id ${req.params.sensorId} not found.`);
