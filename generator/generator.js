@@ -62,4 +62,42 @@ if (values.live === true){
 else{
     console.log ('Measurements are generated backwards');
 }
+// function for generating values
+function generateValue(index){
+    let value;
+    if (mode === 'random'){
+        value = min + Math.random() * (max - min);
+    }
+    else{
+        const middle = (min + max)/2;
+        const amplitude = (max - min)/2;
+        const angle = 2*Math.PI * index / 24;
+        value = middle + amplitude * Math.sin(angle);
+    }
+    value = Math.round(value * 10)/10;
+    return Math.min(max, Math.max(min, value));
+}
+// SITE URL for routes
+const url = new URL('/api/measurements', values.api);
+// async function that sends a value and informs if it arrived
+async function sendMeasurement(value, timestamp){
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({ value: true, timestamp: timestamp.toISOString() }),
+    });
+}
 
+// main function
+async function main() {
+    const status = await sendMeasurement(generateValue(0), new Date());
+    console.log('Status:', status);
+}
+// catch error and output it
+main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+});
