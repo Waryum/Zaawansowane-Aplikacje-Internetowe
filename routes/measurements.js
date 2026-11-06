@@ -28,9 +28,9 @@ function parseDateParam(value, name){
         return undefined;
     }
     if (typeof value !== 'string' || Number.isNaN(new Date(value).getTime())){
-        throw new HttpError(`Invalid date parameter: ${value} with name: ${name}`);
+        throw new HttpError(400, `Invalid date in parameter "${name}"`);
     }
-    return value;
+    return new Date(value);
 }
 
 // POST /api/measurements, requires sensor api key
@@ -97,11 +97,11 @@ router.get('/', async (req, res) => {
         if (typeof req.query.series !== 'string'){
             throw new HttpError(400, 'Parameter "series" must be a comma-separated list of ids');
         }
-    }
-    // check if seriesIds received has any Ids given
-    seriesIds = req.query.series.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
-    if (seriesIds.length === 0){
-        throw new HttpError(400, 'Parameter "series" must contain at least one id');
+        // check if seriesIds received has any Ids given
+        seriesIds = req.query.series.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+        if (seriesIds.length === 0){
+            throw new HttpError(400, 'Parameter "series" must contain at least one id');
+        }
     }
 
     // parse date in search filters
@@ -116,9 +116,9 @@ router.get('/', async (req, res) => {
     const direction = sort === '-timestamp' ? 'DESC' : 'ASC';
 
     // limit
-    const limit = req.query.limit ?? 1000;
-    if (Number.isInteger(limit) || limit < 1 || limit > 10000){
-        throw new HttpError(400, 'Parameter "limit" must a number from the range [1, 10000]');
+    const limit = req.query.limit === undefined ?? 1000 : Number(req.query.limit);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 10000){
+        throw new HttpError(400, 'Parameter "limit" must a number from 1 to 10000');
     }
 
     // tables for search parameters and conditions
