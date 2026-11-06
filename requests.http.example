@@ -58,3 +58,127 @@ Authorization: Bearer {{token}}
 ### DELETE /api/sensors/{sensorId}
 DELETE http://localhost:3500/api/sensors/3
 Authorization: Bearer {{token}}
+
+// FULL TESTING ROUTE:
+
+### P1. Logowanie
+POST http://localhost:3500/api/auth/login
+Content-Type: application/json
+
+{"username": "YourUsername", "password": "YourPassword"}
+
+> {% client.global.set("token", response.body.accessToken); %}
+
+### P2. Seria A
+POST http://localhost:3500/api/series
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Test A", "minValue": 0, "maxValue": 100, "color": "#1f77b4"}
+
+> {% client.global.set("seriesA", response.body.id); %}
+
+### P3. Czujnik serii A
+POST http://localhost:3500/api/sensors
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Czujnik A", "seriesId": {{seriesA}}}
+
+> {% client.global.set("apiKeyA", response.body.apiKey); %}
+
+### P4. Wynik A o 10:00
+POST http://localhost:3500/api/measurements
+X-API-Key: {{apiKeyA}}
+Content-Type: application/json
+
+{"value": 20, "timestamp": "2026-01-10T10:00:00Z"}
+
+> {% client.global.set("measurementA", response.body.id); %}
+
+### P5. Wynik A o 11:00
+POST http://localhost:3500/api/measurements
+X-API-Key: {{apiKeyA}}
+Content-Type: application/json
+
+{"value": 21, "timestamp": "2026-01-10T11:00:00Z"}
+
+### P6. Wynik A o 12:00
+POST http://localhost:3500/api/measurements
+X-API-Key: {{apiKeyA}}
+Content-Type: application/json
+
+{"value": 22, "timestamp": "2026-01-10T12:00:00Z"}
+
+### P7. Seria B
+POST http://localhost:3500/api/series
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Test B", "minValue": 0, "maxValue": 100, "color": "#ff7f0e"}
+
+> {% client.global.set("seriesB", response.body.id); %}
+
+### P8. Czujnik serii B
+POST http://localhost:3500/api/sensors
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Czujnik B", "seriesId": {{seriesB}}}
+
+> {% client.global.set("apiKeyB", response.body.apiKey); %}
+
+### P9. Wynik B o 11:30
+POST http://localhost:3500/api/measurements
+X-API-Key: {{apiKeyB}}
+Content-Type: application/json
+
+{"value": 50, "timestamp": "2026-01-10T11:30:00Z"}
+
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements/{{measurementA}}
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements/9999999
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements?series={{seriesA}}
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements?series={{seriesA}}&sort=-timestamp
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements?series={{seriesA}}&from=2026-01-10T11:00:00Z&to=2026-01-10T11:00:00Z
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements?series={{seriesA}}&from=2026-01-10T12:00:00%2B01:00&to=2026-01-10T12:00:00%2B01:00
+
+### GET /api/measurements
+GET http://localhost:3500/api/measurements?series={{seriesA}},{{seriesB}}
+
+### PUT /api/measurements
+PUT http://localhost:3500/api/measurements/{{measurementA}}
+
+### DELETE /api/measurements
+DELETE http://localhost:3500/api/measurements/{{measurementA}}
+
+####
+
+### 406
+GET http://localhost:3500/api/series
+Accept: application/xml
+
+### 415
+POST http://localhost:3500/api/measurements
+X-API-Key: {{apiKeyA}}
+Content-Type: text/plain
+
+value=1
+
+### Wylogowanie bez treści, nadal 204 (nie 415)
+POST http://localhost:3500/api/auth/logout
+Authorization: Bearer {{token}}
