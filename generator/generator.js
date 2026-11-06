@@ -1,19 +1,44 @@
 // script for generating sample series
 
+// Example:
+//   node generator/generator.js --api https://pogoda.jakubwor.hostilla.pl --key <API key>
+//        --count=24 --interval=3600 --mode=sine --min=-2 --max=9
+// Negative numbers must be written with "=", e.g. --min=-5.
+
 const { parseArgs } = require('node:util');
-// read parameters given in function
-const { values } = parseArgs({
-    options: {
-        api: { type: 'string' },
-        key: { type: 'string' },
-        count: { type: 'string', default: '20' },
-        interval: { type: 'string', default: '3600' },
-        live: {type: 'boolean', default: false },
-        min: { type: 'string', default: '0'},
-        max: { type: 'string', default: '25'},
-        mode: {type: 'string', default: 'random'},
-    },
-})
+
+
+// prints an error and stops the program (used only before any request is sent)
+function fail(message) {
+    console.error(`Error: ${message}`);
+    process.exit(1);
+}
+
+// waits the given number of milliseconds
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+let values;
+try {
+    ({ values } = parseArgs({
+        options: {
+            api:      { type: 'string' },
+            key:      { type: 'string' },
+            count:    { type: 'string', default: '20' },
+            interval: { type: 'string', default: '3600' },
+            live:     { type: 'boolean', default: false },
+            min:      { type: 'string', default: '0' },
+            max:      { type: 'string', default: '25' },
+            mode:     { type: 'string', default: 'random' },
+        },
+    }));
+} catch (err) {
+    // unknown option, missing value, "--min -5" instead of "--min=-5" etc.
+    fail(err.message);
+}
+
+
 
 // change given strings to numbers + apiKey is an env parameter if not given
 const apiKey = values.key ?? process.env.SENSOR_API_KEY;
@@ -24,44 +49,40 @@ const max = Number(values.max);
 const mode = values.mode;
 const api = values.api;
 // errors if not correct parameters
-if (values.api === undefined ){
-    console.error('HTTPS address is required');
-    process.exit(1);
+if (!values.api) {
+    fail('Parameter "--api" (application address) is required');
 }
-if (!apiKey){
-    console.error('Sensor API key is required');
-    process.exit(1);
+
+// full address of the endpoint; new URL() also validates the given address
+let url;
+try {
+    url = new URL('/api/measurements', values.api);
+} catch {
+    fail(`"${values.api}" is not a valid URL`);
 }
-if (!Number.isInteger(count) || count < 1 ){
-    console.error('Parameter "count" must be an integer of at least 1');
-    process.exit(1);
+
+if (!apiKey) {
+    fail('Sensor API key is required (--key or SENSOR_API_KEY)');
 }
-if (!Number.isInteger(interval) || interval <= 0){
-    console.error('Interval must be number greater than 0');
-    process.exit(1);
+if (!Number.isInteger(count) || count < 1) {
+    fail('Parameter "--count" must be an integer of at least 1');
 }
-if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max){
-    console.error('Maximum value must a number greater than minimum value');
-    process.exit(1);
+if (!Number.isFinite(interval) || interval <= 0) {
+    fail('Parameter "--interval" must be a number of seconds greater than 0');
 }
-if (!['random', 'sine'].includes(mode)){
-    console.error('Mode must be either "random" or "sine"');
-    process.exit(1);
+if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) {
+    fail('Parameters "--min" and "--max" must be numbers with min < max');
 }
-// output accepted parameters
-console.log(`Sensor API key is ${apiKey.slice(0, 8)}...`);
-console.log(`Number of measurements is ${count}`);
-console.log(`Interval is ${interval}`);
-console.log(`Minimum value is ${min}`);
-console.log(`Maximum value is ${max}`);
-console.log(`Chosen mode is ${mode}`);
-console.log(`Site URL is ${api}`);
-if (values.live === true){
-    console.log('Measurements are live');
+if (!['random', 'sine'].includes(mode)) {
+    fail('Parameter "--mode" must be "random" or "sine"');
 }
-else{
-    console.log ('Measurements are generated backwards');
-}
+console.log('Sensor emulator configuration:');
+console.log(`  endpoint: ${url.href}`);
+console.log(`  API key:  ${apiKey.slice(0, 8)}...`);
+console.log(`  values:   ${mode}, range [${min}, ${max}]`);
+console.log(`  count:    ${count}, interval ${interval} s`);
+console.log(`  timing:   ${live ? 'live (current time)' : 'past (timestamps backwards from now)'}`);
+
 // function for generating values
 function generateValue(index){
     let value;
@@ -77,26 +98,105 @@ function generateValue(index){
     value = Math.round(value * 10)/10;
     return Math.min(max, Math.max(min, value));
 }
-// SITE URL for routes
-const url = new URL('/api/measurements', values.api);
-// async function that sends a value and informs if it arrived
-async function sendMeasurement(value, timestamp){
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-        },
-        body: JSON.stringify({ value: true, timestamp: timestamp.toISOString() }),
-    });
+
+// sending one measurement
+// returns the HTTP status code, or 0 when the server could not be reached
+async function sendMeasurement(value, timestamp) {
+    let response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': apiKey,
+            },
+            body: JSON.stringify({ value, timestamp: timestamp.toISOString() }),
+        });
+    } catch (err) {
+        // no connection at all: wrong address, server down, no network
+        console.error(`Connection error: ${err.cause?.code ?? err.message}`);
+        return 0;
+    }
+
+    // the body is JSON (measurement or problem+json); an HTML error page is not
+    let body = null;
+    try {
+        body = await response.json();
+    } catch {
+        body = null;
+    }
+
+    const time = timestamp.toISOString();
+    if (response.status === 201) {
+        console.log(`OK       201  id=${body?.id}  value=${value}  timestamp=${time}`);
+    } else {
+        // readable rejection message required by F4
+        const reason = body?.detail ?? body?.title ?? 'no details';
+        console.error(`REJECTED ${response.status}  value=${value}  timestamp=${time}  reason: ${reason}`);
+    }
+    return response.status;
+}
+
+// past mode: timestamps from the past
+
+async function runPast() {
+    const now = Date.now();
+    let accepted = 0;
+    let rejected = 0;
+
+    for (let i = 0; i < count; i++) {
+        // oldest first; the last measurement gets the current time
+        const timestamp = new Date(now - (count - 1 - i) * interval * 1000);
+        const status = await sendMeasurement(generateValue(i), timestamp);
+
+        if (status === 201) {
+            accepted++;
+        } else {
+            rejected++;
+        }
+        if (status === 401 || status === 0) {
+            console.error('Stopping: the API key is invalid or the server is unreachable.');
+            break;
+        }
+    }
+    return { accepted, rejected };
+}
+
+// live mode: current timestamps
+async function runLive() {
+    let accepted = 0;
+    let rejected = 0;
+
+    for (let i = 0; i < count; i++) {
+        const status = await sendMeasurement(generateValue(i), new Date());
+
+        if (status === 201) {
+            accepted++;
+        } else {
+            rejected++;
+        }
+        if (status === 401) {
+            console.error('Stopping: the API key is invalid (sensor deregistered?).');
+            break;
+        }
+        // a temporary connection problem (status 0) does not stop a live sensor
+        if (i < count - 1) {
+            await sleep(interval * 1000);
+        }
+    }
+    return { accepted, rejected };
 }
 
 // main function
+
 async function main() {
-    const status = await sendMeasurement(generateValue(0), new Date());
-    console.log('Status:', status);
+    const { accepted, rejected } = live ? await runLive() : await runPast();
+    console.log(`Done: ${accepted} accepted, ${rejected} rejected or failed.`);
+    if (rejected > 0) {
+        process.exitCode = 1;
+    }
 }
-// catch error and output it
+
 main().catch((err) => {
     console.error(err);
     process.exitCode = 1;
