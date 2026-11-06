@@ -89,10 +89,5 @@ router.delete('/:sensorId', async (req, res) => {
     res.status(204).end();
 })
 
-
-
-
-
-
 // exporting sensor.js module
 module.exports = router;
