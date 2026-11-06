@@ -2,18 +2,16 @@
 
 // requires Express
 const express = require('express');
-
 // requires routes/system -- for checking /api/health, as "system" constant
 const system = require('./routes/system');
-
 // authorization route
 const authRouter = require('./routes/auth');
-
 // series route
 const series = require('./routes/series');
-
 // sensors route
 const sensors = require('./routes/sensors');
+// measurements route
+const measurements = require('./routes/measurements');
 
 // notFound function
 const notFound = require('./middleware/notFound');
@@ -34,6 +32,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/series', series);
 // application is told to use /api/sensors
 app.use('/api/sensors', sensors);
+// application is told to use /api/measurements
+app.use('/api/measurements', measurements);
 
 
 
