@@ -3,3 +3,4 @@
 /.env
 /requests.http
 /full_test.http
+/test-on-site.http
