@@ -28,5 +28,6 @@ Struktura katalogu:
 4. dodatkowe funkcje w katalogu utils/
 5. skrypt tworzenia konta administratora w katalogu scripts/
 6. generator wartości w katalogu generator/
+7. Katalog information/ zawiera testowe wywołania SQL query wykorzystane przy testach oraz diagram ERD.
 
 W głównym katalogu znajdują się pliki app.js oraz plik wywołujący server.js.
