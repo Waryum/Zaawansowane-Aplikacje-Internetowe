@@ -9,7 +9,7 @@ const pool = mariadb.createPool({
     database: process.env.DB_NAME,
     bigIntAsNumber: true,
     decimalAsNumber: true,
-    timezone: 'Etc/UTC'
+    timezone: '+00:00'
 });
 
 // export pool
