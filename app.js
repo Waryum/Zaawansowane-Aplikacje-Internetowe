@@ -13,6 +13,11 @@ const sensors = require('./routes/sensors');
 // measurements route
 const measurements = require('./routes/measurements');
 
+// requireJsonAccept function
+const requireJsonAccept = require('./middleware/requireJsonAccept');
+// checkContentType function
+const checkContentType = require('./middleware/checkContentType');
+
 // notFound function
 const notFound = require('./middleware/notFound');
 // errorHandler function
@@ -23,6 +28,11 @@ const app = express();
 
 // application is told to use express.json
 app.use(express.json());
+
+// application is told to use function requireJsonAccept
+app.use(requireJsonAccept);
+// application is told to use function checkContentType
+app.use(checkContentType);
 
 // application is told to use /api/system.js (will route it as GET /api/health)
 app.use('/api', system);
