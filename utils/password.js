@@ -1,14 +1,14 @@
 // two scripts: verifyPassword and hashPassword
-const argon2 = require("argon2");
+const bcryptjs = require("bcryptjs");
 
-// hashing function based on argon2
+// hashing function based on bcryptjs
 async function hashPassword(password) {
-    return await argon2.hash(password);
+    return await bcryptjs.hash(password, 12);
 }
 
-// password verification function based on argon2
+// password verification function based on bcryptjs
 async function verifyPassword(hash, password){
-     return await argon2.verify(hash, password);
+     return await bcryptjs.compare(password, hash);
 }
 
 // export both functions
