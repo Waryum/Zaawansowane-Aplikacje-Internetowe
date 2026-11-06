@@ -91,7 +91,7 @@ router.get('/:seriesId', async (req, res) => {
     res.json(toSeriesResponse(row));
 })
 
-// DELETE /api/series{seriesId}, requiresAdmin
+// DELETE /api/series/{seriesId}, requiresAdmin
 router.delete('/:seriesId', requireAdmin, async (req, res) => {
     // try to delete specified seriesId
     const result = await pool.query('DELETE FROM series WHERE id = ?', [req.params.seriesId]);
@@ -101,6 +101,33 @@ router.delete('/:seriesId', requireAdmin, async (req, res) => {
     }
     // response after correct delete
     res.status(204).end();
+})
+
+// PUT /api/series/{seriesId}, requiresAdmin, for updating series
+router.put('/:seriesId', requireAdmin, async (req, res) => {
+    const body = req.body ?? {};
+    // validate req input body
+    validateSeriesInput(body);
+    // SELECT row from database with specified req.params.seriesId
+    const rows = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series WHERE id = ?', [req.params.seriesId]);
+    // the row
+    const row = rows[0];
+    // check if row was found
+    if (row === undefined){
+        throw new HttpError(404, `Specified series with id ${req.params.seriesId} not found.`);
+    }
+    // check if there is a conflict in received PUT body
+    const testConflict = await pool.query('SELECT COUNT(*) AS outside FROM measurements WHERE seriesId = ? AND (value < ? OR value > ?)', [req.params.seriesId, body.minValue, body.maxValue]);
+    if (testConflict[0].outside > 0){
+        throw new HttpError(409, 'Update query conflict with current database: new range would exclude existing measurements of this series');
+    }
+    // UPDATE to the specified seriesId
+    await pool.query('UPDATE series SET name = ?, lowestValue = ?, highestValue = ?, unit = ?, color = ?, icon = ? WHERE id = ?', [body.name, body.minValue, body.maxValue, body.unit ?? null, body.color, body.icon ?? null, req.params.seriesId]);
+    // find updated row in database
+    const rowsUpdated = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series WHERE id = ?', [req.params.seriesId]);
+    const rowUpdated = rowsUpdated[0];
+    // response
+    res.json(toSeriesResponse(rowUpdated));
 })
 
 module.exports = router;
