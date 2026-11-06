@@ -1,5 +1,6 @@
-// script for generating sample series
-
+// Sensor emulator (F13): generates measurements and sends them to the API
+// with a sensor API key (POST /api/measurements, header X-API-Key).
+//
 // Example:
 //   node generator/generator.js --api https://pogoda.jakubwor.hostilla.pl --key <API key>
 //        --count=24 --interval=3600 --mode=sine --min=-2 --max=9
@@ -7,6 +8,7 @@
 
 const { parseArgs } = require('node:util');
 
+// ---------- helpers ----------
 
 // prints an error and stops the program (used only before any request is sent)
 function fail(message) {
@@ -18,6 +20,8 @@ function fail(message) {
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// ---------- 1. parameters ----------
 
 let values;
 try {
@@ -38,17 +42,15 @@ try {
     fail(err.message);
 }
 
-
-
-// change given strings to numbers + apiKey is an env parameter if not given
+// API key: parameter first, environment variable as a fallback (never hard-coded, T11)
 const apiKey = values.key ?? process.env.SENSOR_API_KEY;
 const count = Number(values.count);
 const interval = Number(values.interval);
 const min = Number(values.min);
 const max = Number(values.max);
 const mode = values.mode;
-const api = values.api;
-// errors if not correct parameters
+const live = values.live;
+
 if (!values.api) {
     fail('Parameter "--api" (application address) is required');
 }
@@ -76,6 +78,7 @@ if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max) {
 if (!['random', 'sine'].includes(mode)) {
     fail('Parameter "--mode" must be "random" or "sine"');
 }
+
 console.log('Sensor emulator configuration:');
 console.log(`  endpoint: ${url.href}`);
 console.log(`  API key:  ${apiKey.slice(0, 8)}...`);
@@ -83,23 +86,24 @@ console.log(`  values:   ${mode}, range [${min}, ${max}]`);
 console.log(`  count:    ${count}, interval ${interval} s`);
 console.log(`  timing:   ${live ? 'live (current time)' : 'past (timestamps backwards from now)'}`);
 
-// function for generating values
-function generateValue(index){
+// ---------- 2. value generation ----------
+
+function generateValue(index) {
     let value;
-    if (mode === 'random'){
+    if (mode === 'random') {
         value = min + Math.random() * (max - min);
-    }
-    else{
-        const middle = (min + max)/2;
-        const amplitude = (max - min)/2;
-        const angle = 2*Math.PI * index / 24;
+    } else {
+        const middle = (min + max) / 2;
+        const amplitude = (max - min) / 2;
+        const angle = 2 * Math.PI * index / 24;   // full cycle every 24 measurements
         value = middle + amplitude * Math.sin(angle);
     }
-    value = Math.round(value * 10)/10;
-    return Math.min(max, Math.max(min, value));
+    value = Math.round(value * 10) / 10;           // one decimal place
+    return Math.min(max, Math.max(min, value));    // rounding must not leave the range
 }
 
-// sending one measurement
+// ---------- 3. sending one measurement ----------
+
 // returns the HTTP status code, or 0 when the server could not be reached
 async function sendMeasurement(value, timestamp) {
     let response;
@@ -137,7 +141,7 @@ async function sendMeasurement(value, timestamp) {
     return response.status;
 }
 
-// past mode: timestamps from the past
+// ---------- 4. past mode: a whole series with timestamps from the past ----------
 
 async function runPast() {
     const now = Date.now();
@@ -162,7 +166,8 @@ async function runPast() {
     return { accepted, rejected };
 }
 
-// live mode: current timestamps
+// ---------- 5. live mode: current measurements at a fixed interval ----------
+
 async function runLive() {
     let accepted = 0;
     let rejected = 0;
@@ -187,7 +192,7 @@ async function runLive() {
     return { accepted, rejected };
 }
 
-// main function
+// ---------- main ----------
 
 async function main() {
     const { accepted, rejected } = live ? await runLive() : await runPast();
