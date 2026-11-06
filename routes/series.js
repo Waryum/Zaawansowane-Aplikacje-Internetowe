@@ -1,5 +1,4 @@
 // series tag activities
-
 // authorization tag activities
 // required functions
 const express = require('express');

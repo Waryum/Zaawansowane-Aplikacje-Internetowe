@@ -9,8 +9,11 @@ const system = require('./routes/system');
 // authorization route
 const authRouter = require('./routes/auth');
 
-//series route
+// series route
 const series = require('./routes/series');
+
+// sensors route
+const sensors = require('./routes/sensors');
 
 // notFound function
 const notFound = require('./middleware/notFound');
@@ -29,6 +32,8 @@ app.use('/api', system);
 app.use('/api/auth', authRouter);
 // application is told to use /api/series
 app.use('/api/series', series);
+// application is told to use /api/sensors
+app.use('/api/sensors', sensors);
 
 
 

@@ -15,3 +15,24 @@ Authorization: Bearer {{token}}
 
 ### Listing series
 GET http://localhost:3500/api/series
+
+### POST series
+POST http://localhost:3500/api/series
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Warszawa", "minValue": -40, "maxValue": 50, "color": "#1F33BA"}
+
+### GET an existing seriesId → 200
+GET http://localhost:3500/api/series/2
+
+### DELETE /api/series/seriesId
+DELETE http://localhost:3500/api/series/1
+Authorization: Bearer {{token}}
+
+### PUT /api/series/seriesId
+PUT http://localhost:3500/api/series/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Warszawa-2", "minValue": -30, "maxValue": 50, "color": "#1F53BA", "icon":  "circle"}
