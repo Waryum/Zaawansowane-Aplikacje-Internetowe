@@ -36,3 +36,25 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {"name": "Warszawa-2", "minValue": -30, "maxValue": 50, "color": "#1F53BA", "icon":  "circle"}
+
+
+### Sensor testing getting a list
+GET http://localhost:3500/api/sensors
+Authorization: Bearer {{token}}
+
+### POST sensor into /api/sensors
+POST http://localhost:3500/api/sensors
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"name": "Sensor-Warszawa-1", "seriesId":  2}
+
+> {% client.global.set("apiKey", response.body.apiKey); %}
+
+### GET /api/sensors/{sensorId}
+GET http://localhost:3500/api/sensors/3
+Authorization: Bearer {{token}}
+
+### DELETE /api/sensors/{sensorId}
+DELETE http://localhost:3500/api/sensors/3
+Authorization: Bearer {{token}}
