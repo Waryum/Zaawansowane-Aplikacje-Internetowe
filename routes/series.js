@@ -70,17 +70,13 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdmin, async (req, res) => {
     const body = req.body ?? {};
     // check received body values
-
-
+    validateSeriesInput(body);
     // if ok, insert into database
-    const results = await pool.query('INSERT INTO series (name, lowestValue, highestValue, unit, color, icon) VALUES (?, ?, ?, ?, ?, ?)', [body.name, body.minValue, body.maxValue, body.unit, body.color, body.icon]);
+    const results = await pool.query('INSERT INTO series (name, lowestValue, highestValue, unit, color, icon) VALUES (?, ?, ?, ?, ?, ?)', [body.name, body.minValue, body.maxValue, body.unit ?? null, body.color, body.icon ?? null]);
     // get location of newly inserted series from database
-    const rows = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series ORDER BY id');
-
-
-
+    const rows = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series WHERE id = ?', [results.insertId]);
     // response with new series inserted location
-    res.status(201).location(rows.id).json(toSeriesResponse(rows));
+        res.status(201).location(`${req.baseUrl}/${results.insertId}`).json(toSeriesResponse(rows[0]));
 })
 
 module.exports = router;
