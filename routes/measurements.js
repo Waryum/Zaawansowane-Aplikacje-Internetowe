@@ -3,13 +3,10 @@
 const express = require('express');
 // db connection module
 const pool = require("../db/connection");
-// all sensors activities requireAdmin token
+// all sensors activities requireSensor API key
 const requireSensor = require("../middleware/requireSensor"); // middleware for checking sensors API keys
 // HttpError handler
 const HttpError = require("../utils/errors");
-// tokens creation and hashing
-const { generateToken, hashToken } = require("../utils/tokens");
-const http = require("node:http");
 
 // module for route creation
 const router = express.Router();
@@ -19,7 +16,7 @@ function toMeasurementsResponse(row){
     return{
         id: row.id,
         seriesId: row.seriesId,
-        sensorId: row.sensorId,
+        sensorId: row.sensorId ?? undefined,
         value: row.value,
         timestamp: row.timestamp,
     };
@@ -34,33 +31,38 @@ router.post("/", requireSensor, async (req, res) => {
         throw new HttpError(400, "Invalid value");
     }
     // check timestamp
+    let timestamp;
     if (body.timestamp === undefined){
-        body.timestamp = new Date();
+        timestamp = new Date();
     }
     else if (typeof body.timestamp === "string"){
-        body.timestamp = new Date(body.timestamp);
+        timestamp = new Date(body.timestamp);
     }
     else {
         throw new HttpError(400, "Invalid timestamp");
     }
+    // check incorrect timestamp date
+    if (Number.isNaN(timestamp.getTime())){
+        throw new HttpError(400, 'Field "timestamp" must be a valid ISO 8601 date');
+    }
     // check if the date isn't from the future
-    if (body.timestamp.getTime() > Date.now() + 5 * 60 * 1000){
+    if (timestamp.getTime() > Date.now() + 5 * 60 * 1000){
         throw new HttpError(422, "Invalid date");
     }
     // check if given value is from the correct value range
     const seriesRange = await pool.query("SELECT lowestValue, highestValue FROM series WHERE id = ?", [req.sensor.seriesId]);
-    if (body.value < seriesRange[0].lowestValue || body.value > seriesRange[0].highestRange){
+    if (body.value < seriesRange[0].lowestValue || body.value > seriesRange[0].highestValue){
+        console.error(`Rejected measurement from sensor ${req.sensor.id}: value ${body.value} outside [${seriesRange[0].lowestValue}, ${seriesRange[0].highestValue}]`);
         throw new HttpError(422, "Value from outside specified series range");
     }
     // save received measurement
-    const result = await pool.query("INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (?, ?, ?, ?)", [body.seriesId, body.sensorId, body.value, Date()]);
+    const result = await pool.query("INSERT INTO measurements (seriesId, sensorId, value, timestamp) VALUES (?, ?, ?, ?)", [req.sensor.seriesId, req.sensor.id, body.value, timestamp]);
     // read saved measurement
-    const savedMeasurement = await pool.query("SELECT id, seriesId, sensorId, value, timestamp FROM measurements WHERE id = ?", [body.seriesId]);
+    const savedMeasurement = await pool.query("SELECT id, seriesId, sensorId, value, timestamp FROM measurements WHERE id = ?", [result.insertId]);
     // response
     res.status(201)
-        .location(`${req.baseUrl}/${savedMeasurement.insertId}`)
-        .json({...toMeasurementsResponse(result[0])});
-
+        .location(`${req.baseUrl}/${result.insertId}`)
+        .json(toMeasurementsResponse(savedMeasurement[0]));
 })
 
 
