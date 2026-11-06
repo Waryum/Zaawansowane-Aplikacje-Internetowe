@@ -1,7 +1,7 @@
 // script for generating sample series
 
 const { parseArgs } = require('node:util');
-
+// read parameters given in function
 const { values } = parseArgs({
     options: {
         api: { type: 'string' },
@@ -15,32 +15,51 @@ const { values } = parseArgs({
     },
 })
 
+// change given strings to numbers + apiKey is an env parameter if not given
+const apiKey = values.key ?? process.env.SENSOR_API_KEY;
+const count = Number(values.count);
+const interval = Number(values.interval);
+const min = Number(values.min);
+const max = Number(values.max);
+const mode = values.mode;
+const api = values.api;
+// errors if not correct parameters
 if (values.api === undefined ){
     console.error('HTTPS address is required');
     process.exit(1);
 }
-
-if (values.key === undefined ){
+if (!apiKey){
     console.error('Sensor API key is required');
     process.exit(1);
 }
-
-if (!Number.isInteger(values.count) || values.count < 0 ){
-    console.error('Number of expected measurements is required');
+if (!Number.isInteger(count) || count < 1 ){
+    console.error('Parameter "count" must be an integer of at least 1');
     process.exit(1);
 }
-
-if (!Number.isInteger(values.interval) || values.interval <= 0){
+if (!Number.isInteger(interval) || interval <= 0){
     console.error('Interval must be number greater than 0');
     process.exit(1);
 }
-
-if ((!Number.isFinite(values.min) || !Number.isFinite(values.max)) && values.min > values.max){
+if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max){
     console.error('Maximum value must a number greater than minimum value');
     process.exit(1);
 }
-
-if (values.mode !== 'random' || values.mode !== 'sine'){
+if (!['random', 'sine'].includes(mode)){
     console.error('Mode must be either "random" or "sine"');
     process.exit(1);
 }
+// output accepted parameters
+console.log(`Sensor API key is ${apiKey.slice(0, 8)}...`);
+console.log(`Number of measurements is ${count}`);
+console.log(`Interval is ${interval}`);
+console.log(`Minimum value is ${min}`);
+console.log(`Maximum value is ${max}`);
+console.log(`Chosen mode is ${mode}`);
+console.log(`Site URL is ${api}`);
+if (values.live === true){
+    console.log('Measurements are live');
+}
+else{
+    console.log ('Measurements are generated backwards');
+}
+
