@@ -76,7 +76,31 @@ router.post('/', requireAdmin, async (req, res) => {
     // get location of newly inserted series from database
     const rows = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series WHERE id = ?', [results.insertId]);
     // response with new series inserted location
-        res.status(201).location(`${req.baseUrl}/${results.insertId}`).json(toSeriesResponse(rows[0]));
+    res.status(201).location(`${req.baseUrl}/${results.insertId}`).json(toSeriesResponse(rows[0]));
+})
+
+// GET /api/series/{seriesId}
+router.get('/:seriesId', async (req, res) => {
+    // check database for specific seriesId received in Request
+    const rows = await pool.query('SELECT id, name, lowestValue, highestValue, unit, color, icon FROM series WHERE id = ?', [req.params.seriesId]);
+    const row = rows[0];
+    if (row === undefined){
+        throw new HttpError(404, `Specified series with id ${req.params.seriesId} not found.`);
+    }
+    // response if specified seriesId found
+    res.json(toSeriesResponse(row));
+})
+
+// DELETE /api/series{seriesId}, requiresAdmin
+router.delete('/:seriesId', requireAdmin, async (req, res) => {
+    // try to delete specified seriesId
+    const result = await pool.query('DELETE FROM series WHERE id = ?', [req.params.seriesId]);
+    // check if anything was deleted
+    if (result.affectedRows === 0){
+        throw new HttpError(404, `Specified series with id ${req.params.seriesId} not found.`);
+    }
+    // response after correct delete
+    res.status(204).end();
 })
 
 module.exports = router;
