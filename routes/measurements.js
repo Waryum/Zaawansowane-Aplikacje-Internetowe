@@ -47,7 +47,7 @@ router.post("/", requireSensor, async (req, res) => {
     }
     // check if the date isn't from the future
     if (timestamp.getTime() > Date.now() + 5 * 60 * 1000){
-        throw new HttpError(422, "Invalid date");
+        throw new HttpError(422, "Invalid date: Timestamp is more than 5 minutes in the future");
     }
     // check if given value is from the correct value range
     const seriesRange = await pool.query("SELECT lowestValue, highestValue FROM series WHERE id = ?", [req.sensor.seriesId]);
