@@ -116,9 +116,9 @@ router.get('/', async (req, res) => {
     const direction = sort === '-timestamp' ? 'DESC' : 'ASC';
 
     // limit
-    const limit = req.query.limit === undefined ?? 1000 : Number(req.query.limit);
+    const limit = req.query.limit === undefined ? 1000 : Number(req.query.limit);
     if (!Number.isInteger(limit) || limit < 1 || limit > 10000){
-        throw new HttpError(400, 'Parameter "limit" must a number from 1 to 10000');
+        throw new HttpError(400, 'Parameter "limit" must an integer from 1 to 10000');
     }
 
     // tables for search parameters and conditions
@@ -147,5 +147,5 @@ router.get('/', async (req, res) => {
 })
 
 
-
+// export measurements.js
 module.exports = router;
