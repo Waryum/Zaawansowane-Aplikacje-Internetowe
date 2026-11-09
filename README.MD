@@ -31,3 +31,5 @@ Struktura katalogu:
 7. Katalog information/ zawiera testowe wywołania SQL query wykorzystane przy testach oraz diagram ERD.
 
 W głównym katalogu znajdują się pliki app.js oraz plik wywołujący server.js.
+
+Projekt prowdzony z wykorzystaniem Claude AI.
